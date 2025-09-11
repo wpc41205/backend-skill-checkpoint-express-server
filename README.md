@@ -1,217 +1,305 @@
-# Express Server - Question & Answer API
+# Express Server - Q&A API
 
-A RESTful API server built with Express.js and PostgreSQL for managing questions and answers, similar to Quora.
+A RESTful API for managing questions and answers, built with Express.js and PostgreSQL.
 
-## 🚀 Features
+## Features
 
-- **Question Management**: Create, read, update, and delete questions
-- **Answer System**: Add answers to questions with content validation
-- **Category Support**: Organize questions by categories (Software, Food, Travel, Science, etc.)
-- **Search Functionality**: Search questions by title or category
-- **PostgreSQL Database**: Robust data persistence with connection pooling
-- **RESTful API**: Clean and intuitive API endpoints
+- ✅ Create, read, update, and delete questions
+- ✅ Create and read answers for questions
+- ✅ Search questions by title or category
+- ✅ Automatic timestamps (created_at, updated_at)
+- ✅ Answer length validation (≤ 300 characters)
+- ✅ Cascade delete (answers are deleted when question is deleted)
+- ✅ Consistent response format
+- ✅ Simple Swagger API documentation
 
-## 🛠️ Tech Stack
-
-- **Backend**: Node.js with Express.js
-- **Database**: PostgreSQL
-- **Database Driver**: `pg` (node-postgres)
-- **Development**: Nodemon for auto-restart
-- **Language**: ES6+ (ES Modules)
-
-## 📋 Prerequisites
-
-Before running this project, make sure you have:
-
-- Node.js (v14 or higher)
-- PostgreSQL database server
-- npm or yarn package manager
-
-## 🚀 Installation & Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd backend-skill-checkpoint-express-server
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Database Setup**
-   - Create a PostgreSQL database named `Quora Mock`
-   - Update the database connection string in `utils/db.mjs`:
-     ```javascript
-     const connectionPool = new Pool({
-       connectionString: "postgresql://username:password@localhost:5432/Quora Mock",
-     });
-     ```
-
-4. **Create Database Tables**
-   ```sql
-   -- Questions table
-   CREATE TABLE questions (
-     id SERIAL PRIMARY KEY,
-     title VARCHAR(255) NOT NULL,
-     description TEXT NOT NULL,
-     category VARCHAR(100) NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
-
-   -- Answers table
-   CREATE TABLE answers (
-     id SERIAL PRIMARY KEY,
-     content VARCHAR(300) NOT NULL,
-     question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
-   ```
-
-5. **Start the server**
-   ```bash
-   npm start
-   ```
-
-The server will start running on `http://localhost:4000`
-
-## 📚 API Endpoints
+## API Endpoints
 
 ### Questions
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/questions` | Create a new question |
-| `GET` | `/questions` | Get all questions |
-| `GET` | `/questions/:questionId` | Get a specific question by ID |
-| `PUT` | `/questions/:questionId` | Update a question |
-| `DELETE` | `/questions/:questionId` | Delete a question |
-| `GET` | `/questions/search` | Search questions by title or category |
+#### Create a Question
+```http
+POST /questions
+Content-Type: application/json
+
+{
+  "title": "What is Express.js?",
+  "description": "I want to learn about Express.js framework for Node.js",
+  "category": "Software"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Question created successfully.",
+  "data": {
+    "id": 1,
+    "title": "What is Express.js?",
+    "description": "I want to learn about Express.js framework for Node.js",
+    "category": "Software",
+    "created_at": "2024-01-15T10:30:00.000Z",
+    "updated_at": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Get All Questions
+```http
+GET /questions
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "What is Express.js?",
+      "description": "I want to learn about Express.js framework for Node.js",
+      "category": "Software",
+      "created_at": "2024-01-15T10:30:00.000Z",
+      "updated_at": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+#### Search Questions
+```http
+GET /questions/search?title=express&category=software
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "What is Express.js?",
+      "description": "I want to learn about Express.js framework for Node.js",
+      "category": "Software",
+      "created_at": "2024-01-15T10:30:00.000Z",
+      "updated_at": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+#### Get Question by ID
+```http
+GET /questions/1
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "What is Express.js?",
+    "description": "I want to learn about Express.js framework for Node.js",
+    "category": "Software",
+    "created_at": "2024-01-15T10:30:00.000Z",
+    "updated_at": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Update Question
+```http
+PUT /questions/1
+Content-Type: application/json
+
+{
+  "title": "What is Express.js framework?",
+  "description": "I want to learn about Express.js framework for Node.js development"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Question updated successfully.",
+  "data": {
+    "id": 1,
+    "title": "What is Express.js framework?",
+    "description": "I want to learn about Express.js framework for Node.js development",
+    "category": "Software",
+    "created_at": "2024-01-15T10:30:00.000Z",
+    "updated_at": "2024-01-15T11:45:00.000Z"
+  }
+}
+```
+
+#### Delete Question
+```http
+DELETE /questions/1
+```
+
+**Response:**
+```json
+{
+  "message": "Question and all its answers have been deleted successfully."
+}
+```
 
 ### Answers
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/questions/:questionId/answers` | Add an answer to a question |
-| `GET` | `/questions/:questionId/answers` | Get all answers for a question |
-| `DELETE` | `/questions/:questionId/answers` | Delete all answers for a question |
+#### Create an Answer
+```http
+POST /questions/1/answers
+Content-Type: application/json
 
-### Test Endpoint
+{
+  "content": "Express.js is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications."
+}
+```
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/test` | Test if the server is running |
+**Response:**
+```json
+{
+  "message": "Answer created successfully.",
+  "data": {
+    "id": 1,
+    "content": "Express.js is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications.",
+    "question_id": 1,
+    "created_at": "2024-01-15T10:35:00.000Z",
+    "updated_at": "2024-01-15T10:35:00.000Z"
+  }
+}
+```
 
-## 📝 API Usage Examples
+#### Get Answers for a Question
+```http
+GET /questions/1/answers
+```
 
-### Create a Question
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "content": "Express.js is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications.",
+      "created_at": "2024-01-15T10:35:00.000Z",
+      "updated_at": "2024-01-15T10:35:00.000Z"
+    }
+  ]
+}
+```
+
+#### Delete All Answers for a Question
+```http
+DELETE /questions/1/answers
+```
+
+**Response:**
+```json
+{
+  "message": "All answers for the question have been deleted successfully."
+}
+```
+
+## Database Schema
+
+### Questions Table
+```sql
+CREATE TABLE questions (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Answers Table
+```sql
+CREATE TABLE answers (
+  id SERIAL PRIMARY KEY,
+  content VARCHAR(300) NOT NULL,
+  question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## Error Responses
+
+### 400 Bad Request
+```json
+{
+  "message": "Invalid request data."
+}
+```
+
+### 404 Not Found
+```json
+{
+  "message": "Question not found."
+}
+```
+
+### 500 Internal Server Error
+```json
+{
+  "message": "Unable to create question."
+}
+```
+
+## Validation Rules
+
+- **Questions**: title, description, and category are required
+- **Answers**: content is required and must not exceed 300 characters
+- **Updates**: Only title and description can be updated (category cannot be changed)
+- **Search**: At least one search parameter (title or category) is required
+
+## Installation & Setup
+
+1. Install dependencies:
 ```bash
-curl -X POST http://localhost:4000/questions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "What is Express.js?",
-    "description": "I want to learn about Express.js framework for Node.js",
-    "category": "Software"
-  }'
+npm install
 ```
 
-### Get All Questions
-```bash
-curl http://localhost:4000/questions
-```
+2. Set up PostgreSQL database with the schema above
 
-### Search Questions
-```bash
-curl "http://localhost:4000/questions/search?category=Software&title=Express"
-```
+3. Update database connection in `utils/db.mjs`
 
-### Add an Answer
-```bash
-curl -X POST http://localhost:4000/questions/1/answers \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "Express.js is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications."
-  }'
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-You can configure the following:
-
-- **Port**: Default is 4000 (change in `app.mjs`)
-- **Database**: Update connection string in `utils/db.mjs`
-
-### Database Connection
-The application uses a connection pool for better performance and reliability. The pool configuration can be customized in `utils/db.mjs`.
-
-## 📁 Project Structure
-
-```
-backend-skill-checkpoint-express-server/
-├── app.mjs                 # Main application file
-├── package.json            # Project dependencies and scripts
-├── README.md              # This file
-└── utils/
-    └── db.mjs            # Database connection configuration
-```
-
-## 🚀 Running the Application
-
-### Development Mode
+4. Start the server:
 ```bash
 npm start
 ```
-This uses nodemon for automatic server restart on file changes.
 
-### Production Mode
-```bash
-node app.mjs
-```
+The server will run on `http://localhost:4000`
 
-## 🧪 Testing
+## API Documentation
 
-Test the API endpoints using tools like:
+Simple Swagger documentation available at: `http://localhost:4000/api-docs`
+
+## Testing the API
+
+You can test the API using tools like:
 - Postman
-- cURL
-- Insomnia
+- curl
 - Thunder Client (VS Code extension)
 
-## 📊 Database Schema
+Example curl commands:
 
-### Questions Table
-- `id`: Primary key (auto-increment)
-- `title`: Question title (VARCHAR)
-- `description`: Question description (TEXT)
-- `category`: Question category (VARCHAR)
-- `created_at`: Timestamp of creation
+```bash
+# Create a question
+curl -X POST http://localhost:4000/questions \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test Question","description":"Test Description","category":"Test"}'
 
-### Answers Table
-- `id`: Primary key (auto-increment)
-- `content`: Answer content (VARCHAR, max 300 chars)
-- `question_id`: Foreign key to questions table
-- `created_at`: Timestamp of creation
+# Get all questions
+curl http://localhost:4000/questions
 
-## 🤝 Contributing
+# Search questions
+curl "http://localhost:4000/questions/search?title=test"
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the ISC License.
-
-## 🆘 Support
-
-If you encounter any issues or have questions, please:
-1. Check the existing issues
-2. Create a new issue with detailed information
-3. Include error messages and steps to reproduce
-
----
-
-**Happy Coding! 🎉**
+# Create an answer
+curl -X POST http://localhost:4000/questions/1/answers \
+  -H "Content-Type: application/json" \
+  -d '{"content":"This is a test answer"}'
+```
